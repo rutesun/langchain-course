@@ -3,32 +3,19 @@ from langchain.agents import create_agent
 from langchain.tools import tool
 from langchain_core.messages import HumanMessage
 from langchain_openai import ChatOpenAI
-from tavily import TavilyClient
+from langchain_tavily import TavilySearch
+from typing import List
+from pydantic import BaseModel, Field
 
 load_dotenv()
 
-tavily = TavilyClient()
-
-@tool
-def search(query: str) -> str:
-    """
-    Tool that searches over internet
-    Args:
-        query (str): The query to search for
-
-    Returns:
-        str: THe search result
-    """
-    print(f"Searching for {query}")
-    return tavily.search(query = query)
 
 llm = ChatOpenAI(model="gpt-4o")
-tools = [search]
+tools = [TavilySearch()]
 agent = create_agent(model=llm, tools = tools)
 
 def main():
-    print("Hello from langchain-course!")
-    result = agent.invoke({"messages": HumanMessage(content="미국 주식 파가야의 현재 주가와 최근 컨톨에 대해서 요약해줘")})
+    result = agent.invoke({"messages": HumanMessage(content="미국 주식 아이렌의 현재 주가와 최근 컨콜에 대해서 요약해줘")})
     print(result)
 
 
