@@ -14,14 +14,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 tools = [TavilySearch()]
-llm = ChatOpenAI(model="gpt-4.1")
-# llm = ChatOpenAI(model="gpt-5")
+llm = ChatOpenAI(model="gpt-4")
+structured_llm = llm.with_structured_output(AgentResponse)
+
 react_prompt = hub.pull("hwchase17/react")
 output_parser = PydanticOutputParser(pydantic_object=AgentResponse)
 react_prompt_with_format_instructions = PromptTemplate(
     template=REACT_PROMPT_WITH_FORMAT_INSTRUCTIONS,
     input_variables=["input", "agent_scratchpad", "tool_names"],
-).partial(format_instructions=output_parser.get_format_instructions())
+).partial(format_instructions="")
 
 
 agent = create_react_agent(
@@ -30,17 +31,18 @@ agent = create_react_agent(
     # prompt=react_prompt,
     prompt=react_prompt_with_format_instructions,
 )
+
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
 chain = agent_executor
 extract_output = RunnableLambda(lambda x: x["output"])
-parse_output = RunnableLambda(lambda x: output_parser.parse(x))
-chain = agent_executor | extract_output | parse_output
+# parse_output = RunnableLambda(lambda x: output_parser.parse(x))
+chain = agent_executor | extract_output | structured_llm
 
 
 def main():
     result = chain.invoke(        
                           input={            
-                                 "input": "search for 3 job postings for an ai engineer using langchain in the bay area on linkedin and list their details",        }    )    
+                                 "input": "search Top 5 news in USA stock market today",        }    )    
     print(result)
 if __name__ == "__main__":  
     main()
