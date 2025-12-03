@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain.tools import tool
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
+from langchain.agents.structured_output import ToolStrategy
 from langchain_openai import ChatOpenAI
 from langchain_tavily import TavilySearch
 from typing import List
@@ -34,11 +35,17 @@ from models import OrderSummary
 # ... (기존 코드)
 
 if __name__ == "__main__":
-    llm = ChatOpenAI(temperature=0)
+    llm = ChatOpenAI(temperature=0, model_name="gpt-4o")
     tools = [get_order_id, get_order_details]
     agent = create_agent(model=llm, tools = tools)
 
-    result = agent.invoke({"messages": HumanMessage(content="Eden 사용자의 최근 주문 내역과 배송 상태를 확인해줘")})
+    config = {
+        "configurable": {"thread_id": "1"},
+        "run_name": "Order Status Agent", 
+        "tags": ["order_check", "demo", "create_agent"]
+    }
+
+    result = agent.invoke({"messages": HumanMessage(content="Eden 사용자의 최근 주문 내역과 배송 상태를 확인해줘")}, config=config)
     print_messages(result)
 
     print("\n--- Converting to Structured Output ---")
@@ -53,4 +60,10 @@ if __name__ == "__main__":
     # 3. 텍스트 -> JSON 변환 실행
     structured_data = structured_llm.invoke(final_text)
     
-    print(f"JSON Output: {structured_data.json()}")
+    print(f"JSON Output: {structured_data.model_dump_json()}")
+
+    print("\n--- Using ToolStrategy ---")
+     
+    agent = create_agent(model=llm, tools = tools, response_format=ToolStrategy(OrderSummary))
+    result = agent.invoke({"messages": HumanMessage(content="Eden 사용자의 최근 주문 내역과 배송 상태를 확인해줘")}, config=config)
+    print(result['structured_response'])
