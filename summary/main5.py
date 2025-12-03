@@ -5,6 +5,7 @@ from tools import get_order_id, get_order_details, find_tool_by_name
 from callbacks import AgentCallbackHandler
 from langchain_classic.agents import create_tool_calling_agent, AgentExecutor
 from langchain_classic import hub
+from models import OrderSummary
 
 load_dotenv()
 
@@ -12,6 +13,7 @@ if __name__ == "__main__":
     # 1. 도구 및 LLM 설정
     tools = [get_order_id, get_order_details]
     llm = ChatOpenAI(temperature=0)
+    structured_llm = llm.with_structured_output(OrderSummary)
 
     # 2. 프롬프트 가져오기 (Tool Calling 전용 프롬프트)
     # "hwchase17/openai-tools-agent"는 시스템 메시지와 placeholder가 잘 설정된 프롬프트입니다.
@@ -37,3 +39,20 @@ if __name__ == "__main__":
     )
 
     print(result["output"])
+
+    print("\n========\n")
+    # [Structured Output 파이프라인 구성]
+    # 1. agent_executor: 에이전트 실행 (결과는 dict 형태: {'input': ..., 'output': '...'})
+    # 2. lambda x: x["output"]: 딕셔너리에서 'output' 문자열만 추출 (LLM은 문자열 입력을 기대함)
+    # 3. structured_llm: 추출된 텍스트를 Pydantic 객체(OrderSummary)로 변환
+    chain = agent_executor | (lambda x: x["output"]) | structured_llm
+    
+    result = chain.invoke(
+        {"input": "Eden 사용자의 최근 주문 내역과 배송 상태를 확인해줘."},
+        config={"run_name": "Order Status Agent with Structured Output", "tags": ["order_check", "demo", "create_tool_calling_agent", "agentExecutor"]},
+    )
+    print(f"""
+    product: {result.product}
+    price: {result.price}
+    status: {result.status}
+    """)

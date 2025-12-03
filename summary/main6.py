@@ -29,6 +29,10 @@ def print_messages(result):
                 
         print("-" * 50)
 
+from models import OrderSummary
+
+# ... (기존 코드)
+
 if __name__ == "__main__":
     llm = ChatOpenAI(temperature=0)
     tools = [get_order_id, get_order_details]
@@ -36,3 +40,17 @@ if __name__ == "__main__":
 
     result = agent.invoke({"messages": HumanMessage(content="Eden 사용자의 최근 주문 내역과 배송 상태를 확인해줘")})
     print_messages(result)
+
+    print("\n--- Converting to Structured Output ---")
+    
+    # 1. 에이전트의 마지막 답변(텍스트)을 가져옴
+    last_message = result["messages"][-1]
+    final_text = last_message.content
+    
+    # 2. 구조화 전용 LLM 생성 (Pydantic 모델 바인딩)
+    structured_llm = llm.with_structured_output(OrderSummary)
+    
+    # 3. 텍스트 -> JSON 변환 실행
+    structured_data = structured_llm.invoke(final_text)
+    
+    print(f"JSON Output: {structured_data.json()}")
