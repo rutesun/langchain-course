@@ -44,7 +44,7 @@ if __name__ == "__main__":
     print(f"created {len(texts)} chunks")
 
 
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=os.getenv("MY_OPENAI_API_KEY"))
 
     print("ingesting...")
     vectorstore = Chroma(
