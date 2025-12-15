@@ -5,6 +5,7 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import CharacterTextSplitter, RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import TextLoader
 from langchain_chroma import Chroma
+from langchain_pinecone import PineconeVectorStore
 from dotenv import load_dotenv
 
 """
@@ -44,13 +45,17 @@ if __name__ == "__main__":
     print(f"created {len(texts)} chunks")
 
 
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=os.getenv("MY_OPENAI_API_KEY"))
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=os.getenv("MY_OPENAI_API_KEY"), base_url="https://api.openai.com/v1")
 
     print("ingesting...")
-    vectorstore = Chroma(
-        collection_name="my_collection",  # 컬렉션 이름
-        embedding_function=embeddings,    # 임베딩 함수
-        persist_directory="./chroma_db"   # 로컬 저장 (선택사항)
+    # vectorstore = Chroma(
+    #     collection_name="my_collection",  # 컬렉션 이름
+    #     embedding_function=embeddings,    # 임베딩 함수
+    #     persist_directory="./chroma_db"   # 로컬 저장 (선택사항)
+    # )
+    # vectorstore.add_documents(texts)
+    PineconeVectorStore.from_documents(
+        texts, embeddings, index_name="langchain"
     )
-    vectorstore.add_documents(texts)
+   
     print("finish")
