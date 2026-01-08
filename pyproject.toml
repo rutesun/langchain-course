@@ -14,5 +14,6 @@ dependencies = [
    "langchain-openai>=1.0.2",
    "langchain-tavily>=0.2.13",
    "python-dotenv>=1.2.1",
+   "streamlit>=1.52.2",
    "tavily-python>=0.7.12",
 ]
